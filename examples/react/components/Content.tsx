@@ -25,6 +25,7 @@ type Submitted = SubmitEvent & {
 
 const SUGGESTED_DONATION = "0";
 const BOATLOAD_OF_GAS = utils.format.parseNearAmount("0.00000000003")!;
+const GUESTBOOK_CONTRACT_ID = "guest-book.testnet";
 
 interface GetAccountBalanceProps {
   provider: providers.Provider;
@@ -338,7 +339,6 @@ const Content: React.FC = () => {
 
     const message = "test message to sign";
     const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
-    const recipient = "guest-book.testnet";
 
     if (wallet.type === "browser") {
       localStorage.setItem(
@@ -346,7 +346,7 @@ const Content: React.FC = () => {
         JSON.stringify({
           message,
           nonce: [...nonce],
-          recipient,
+          recipient: GUESTBOOK_CONTRACT_ID,
           callbackUrl: location.href,
         })
       );
@@ -356,16 +356,787 @@ const Content: React.FC = () => {
       const signedMessage = await wallet.signMessage({
         message,
         nonce,
-        recipient,
+        recipient: GUESTBOOK_CONTRACT_ID,
       });
       if (signedMessage) {
-        await verifyMessage({ message, nonce, recipient }, signedMessage);
+        await verifyMessage(
+          { message, nonce, recipient: GUESTBOOK_CONTRACT_ID },
+          signedMessage
+        );
       }
     } catch (err) {
       const errMsg =
         err instanceof Error ? err.message : "Something went wrong";
       alert(errMsg);
     }
+  };
+
+  const handleSendMultipleTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "dev-1648806797290-14624341764914",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "increment",
+                args: {},
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+        {
+          signerId: accountId!,
+          receiverId: GUESTBOOK_CONTRACT_ID,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "addMessage",
+                args: { text: "Hello World!" },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendMultipleTransactionsWithoutSignerId = async () => {
+    const { contract } = selector.store.getState();
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          // signerId: accountId!,
+          receiverId: "dev-1648806797290-14624341764914",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "increment",
+                args: {},
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+        {
+          // signerId: accountId!,
+          receiverId: contract!.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "addMessage",
+                args: { text: "Hello World!" },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendMultiNearTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "something",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0.1")!,
+              },
+            },
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "someOtherThing",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("1.1")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendFtTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendFtWithNearTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendMultiFtTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendManyManyFtTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "tinkerunion_nft.testenleap.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "x.testcandy.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendNftTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "nft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "nft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  token_id: "1005",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendNftWithNearTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "nft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "nft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  token_id: "1005",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendFtAndNftTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "nft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "nft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  token_id: "1005",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleTransferSomeFundsToGuestbook = async () => {
+    const wallet = await selector.wallet();
+    await wallet.signAndSendTransaction({
+      signerId: accountId!,
+      receiverId: "pebbletest.testnet",
+      actions: [
+        {
+          type: "Transfer",
+          params: {
+            deposit: utils.format.parseNearAmount("1.25") || "0",
+          },
+        },
+      ],
+    });
+  };
+
+  const handleAddFullAccessKey = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          signerId: accountId!,
+          receiverId: accountId!,
+          actions: [
+            {
+              type: "AddKey",
+              params: {
+                publicKey:
+                  "ed25519:6yjPa9QiwQC6RPwM1ho5BHXbyLkTJvADpgcWf9hjaPoj",
+                accessKey: {
+                  permission: "FullAccess",
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleRemoveFullAccessKey = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          signerId: accountId!,
+          receiverId: accountId!,
+          actions: [
+            {
+              type: "DeleteKey",
+              params: {
+                publicKey:
+                  "ed25519:47DukAY98H5ow7Bic3iwFtaMDAnyEt3MV4U6wToVCkco",
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleContractDeploy = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          signerId: accountId!,
+          receiverId: accountId!,
+          actions: [
+            {
+              type: "DeployContract",
+              params: {
+                code: Buffer.from("asdasdasdasd()"),
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleDeleteAccount = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          signerId: accountId!,
+          receiverId: accountId!,
+          actions: [
+            {
+              type: "DeleteAccount",
+              params: {
+                beneficiaryId: "pebbledev.testnet",
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendWithYoctoNearTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "something",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: "1",
+              },
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleSendManyFtAndNftTransactions = async () => {
+    const wallet = await selector.wallet();
+
+    await wallet.signAndSendTransactions({
+      transactions: [
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "ft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "1000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("0")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "usdn.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "tinkerunion_nft.testenleap.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "x.testcandy.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  amount: "2000000000000000000000",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+        {
+          // Deploy your own version of https://github.com/near-examples/rust-counter using Gitpod to get a valid receiverId.
+          signerId: accountId!,
+          receiverId: "nft1.enleapstack.testnet",
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "nft_transfer",
+                args: {
+                  receiver_id: "compound",
+                  token_id: "1005",
+                  msg: "invest",
+                },
+                gas: BOATLOAD_OF_GAS,
+                deposit: utils.format.parseNearAmount("10")!,
+              },
+            },
+          ],
+        },
+      ],
+    });
   };
 
   if (loading) {
@@ -404,6 +1175,68 @@ const Content: React.FC = () => {
           <w3m-button label="Log in with Ethereum" />
         </div>
       )}
+      <br />
+      <div>
+        <button onClick={handleSendMultipleTransactions}>
+          Send Multiple Transactions
+        </button>
+        <button onClick={handleSendMultipleTransactionsWithoutSignerId}>
+          Send Multiple Transactions (No Signer)
+        </button>
+      </div>
+      <br />
+      <div>
+        <button onClick={handleTransferSomeFundsToGuestbook}>
+          Transfer some funds
+        </button>
+      </div>
+      <br />
+      <div>
+        <button onClick={handleAddFullAccessKey}>
+          Add a full access key (bad)
+        </button>
+        <button onClick={handleRemoveFullAccessKey}>
+          Remove a full access key (bad)
+        </button>
+        <button onClick={handleContractDeploy}>
+          Deploy contract to account (bad)
+        </button>
+        <button onClick={handleDeleteAccount}>Delete account (bad)</button>
+      </div>
+      <br />
+      <div>
+        <button onClick={handleSendWithYoctoNearTransactions}>
+          Send With yocto Near Transactions
+        </button>
+        <button onClick={handleSendMultiNearTransactions}>
+          Send Multiple Near Transactions
+        </button>
+        <button onClick={handleSendFtTransactions}>Send FT Transactions</button>
+        <button onClick={handleSendFtWithNearTransactions}>
+          Send FT With Near Transactions
+        </button>
+        <button onClick={handleSendMultiFtTransactions}>
+          Send Multiple FT Transactions
+        </button>
+        <button onClick={handleSendManyManyFtTransactions}>
+          Send Many Many FT Transactions
+        </button>
+      </div>
+      <br />
+      <div>
+        <button onClick={handleSendNftTransactions}>
+          Send Single NFT Transactions
+        </button>
+        <button onClick={handleSendNftWithNearTransactions}>
+          Send NFT With Near Transactions
+        </button>
+        <button onClick={handleSendFtAndNftTransactions}>
+          Send FT & NFT Transactions
+        </button>
+        <button onClick={handleSendManyFtAndNftTransactions}>
+          Send Many NFT & NFT Transactions
+        </button>
+      </div>
       <Form
         account={account}
         onSubmit={(e) => handleSubmit(e as unknown as Submitted)}
